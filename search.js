@@ -5,7 +5,7 @@
     <div id="wow_final_v19" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a27;z-index:999999;color:#eee;font-family:tahoma,Arial;padding:20px;overflow-y:auto;direction:rtl;text-align:right;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:3px solid #27ae60;padding-bottom:10px;">
             <div style="display:flex;align-items:center;gap:15px;">
-                <h2 style="color:#27ae60;margin:0;">فلترت المنتجات ✨</h2>
+                <h2 style="color:#27ae60;margin:0;">فلترة المنتجات ✨</h2>
                 <button id="toggle_filters" style="background:#444;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:bold;">➖ طي الفلاتر</button>
             </div>
             <div style="font-size:15px;">المخزن: <b id="st_total">0</b> | المطابق: <b id="st_match" style="color:#27ae60">0</b></div>
