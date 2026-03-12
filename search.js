@@ -1,15 +1,15 @@
 (function(){
-    if(document.getElementById('wow_final_v19')){document.getElementById('wow_final_v19').remove();return;}
+    if(document.getElementById('wow_final_v20')){document.getElementById('wow_final_v20').remove();return;}
     
     var html = `
-    <div id="wow_final_v19" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a27;z-index:999999;color:#eee;font-family:tahoma,Arial;padding:20px;overflow-y:auto;direction:rtl;text-align:right;">
+    <div id="wow_final_v20" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a27;z-index:999999;color:#eee;font-family:tahoma,Arial;padding:20px;overflow-y:auto;direction:rtl;text-align:right;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:3px solid #27ae60;padding-bottom:10px;">
             <div style="display:flex;align-items:center;gap:15px;">
-                <h2 style="color:#27ae60;margin:0;">فلترة المنتجات ✨</h2>
+                <h2 style="color:#27ae60;margin:0;">البحث المتقدم في المنتجات ✨</h2>
                 <button id="toggle_filters" style="background:#444;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:bold;">➖ طي الفلاتر</button>
             </div>
             <div style="font-size:15px;">المخزن: <b id="st_total">0</b> | المطابق: <b id="st_match" style="color:#27ae60">0</b></div>
-            <button onclick="document.getElementById('wow_final_v19').remove()" style="background:#e74c3c;color:#fff;border:none;padding:8px 25px;border-radius:8px;cursor:pointer;font-weight:bold;">إغلاق X</button>
+            <button onclick="document.getElementById('wow_final_v20').remove()" style="background:#e74c3c;color:#fff;border:none;padding:8px 25px;border-radius:8px;cursor:pointer;font-weight:bold;">إغلاق X</button>
         </div>
 
         <div id="filter_container" style="background:#252537;padding:20px;border-radius:15px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
@@ -42,6 +42,7 @@
                 <button id="btn_imp" class="btn-main" style="background:#2196F3;">استيراد 📥</button>
                 <button id="btn_sho" class="btn-main" style="background:#27ae60;">إظهار النتائج 🔍</button>
                 <button id="btn_xls" class="btn-main" style="background:#f39c12;">تصدير Excel 📊</button>
+                <button id="btn_del_selected" class="btn-main" style="background:#c0392b;">حذف المحدد 🗑️</button>
                 <button id="btn_reset" class="btn-main" style="background:#fff; color:#000;">تصفير الفلاتر 🔄</button>
             </div>
         </div>
@@ -68,7 +69,6 @@
 
     document.body.insertAdjacentHTML('beforeend', html);
     
-    // تحميل مكتبة الإكسل فوراً
     if (!window.XLSX) {
         var script = document.createElement('script');
         script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
@@ -77,19 +77,16 @@
 
     let allData = [];
 
-    // طي الفلاتر
     document.getElementById('toggle_filters').onclick = function() {
         let inner = document.getElementById('filters_inner');
-        if(inner.style.display === "none") { inner.style.display = "block"; this.innerText = "➖ طي الفلاتر"; }
-        else { inner.style.display = "none"; this.innerText = "➕ فك الفلاتر"; }
+        inner.style.display = inner.style.display === "none" ? "block" : "none";
+        this.innerText = inner.style.display === "none" ? "➕ فك الفلاتر" : "➖ طي الفلاتر";
     };
 
-    // الرواج
     const mAct = document.getElementById('m_act');
     const mBox = document.getElementById('m_box');
     mAct.onclick = function() { mBox.style.opacity = this.checked ? "1" : "0.5"; mBox.style.pointerEvents = this.checked ? "auto" : "none"; };
 
-    // فلاتر ديناميكية
     window.addTextFilter = function() {
         const div = document.createElement('div'); div.className = 'dyn-row';
         div.innerHTML = `<select class="t-field w-input" style="width:150px"><option value="name">اسم المنتج</option><option value="description">الوصف</option><option value="id">ID</option></select>
@@ -110,7 +107,6 @@
     };
     document.getElementById('add_n_btn').onclick = addNumFilter;
 
-    // تصفير
     document.getElementById('btn_reset').onclick = function() {
         document.getElementById('f_brand').value = ""; document.getElementById('f_main').value = "";
         document.getElementById('f_sub').innerHTML = '<option value="">-- اختر الرئيسي --</option>';
@@ -120,7 +116,6 @@
         addTextFilter();
     };
 
-    // استيراد
     document.getElementById('btn_imp').onclick = async function() {
         this.innerText = 'جاري السحب...';
         const r = await fetch('/admin/product?draw=1&start=0&length=15000', {headers:{'X-Requested-With':'XMLHttpRequest'}});
@@ -138,7 +133,6 @@
         this.innerText = 'تم الاستيراد ✅';
     };
 
-    // إظهار النتائج
     document.getElementById('btn_sho').onclick = function() {
         const tbody = document.getElementById('p_body'); tbody.innerHTML = '';
         const results = allData.filter(i => {
@@ -195,7 +189,39 @@
         document.getElementById('st_match').innerText = results.length;
     };
 
-    // كود الحذف المضمون (v19)
+    // كود حذف المحدد المصلح (v20.1)
+    document.getElementById('btn_del_selected').onclick = async function() {
+        let checked = Array.from(document.querySelectorAll('.row-sel:checked'));
+        if(checked.length === 0) return alert('يرجى تحديد منتجات أولاً');
+        if(!confirm(`هل أنت متأكد من حذف ${checked.length} منتجات؟`)) return;
+        
+        let currentToken = document.querySelector('input[name="_token"]')?.value;
+        let count = 0;
+        let totalToDel = checked.length;
+
+        for(let cb of checked){
+            let id = cb.dataset.id;
+            count++;
+            this.innerText = `جاري حذف (${count}/${totalToDel})`;
+            
+            try {
+                await fetch('/admin/product/'+id, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `_token=${currentToken}&_method=DELETE`
+                });
+                cb.closest('tr').remove();
+                // تحديث العداد المباشر
+                document.getElementById('st_match').innerText = document.querySelectorAll('.row-sel').length;
+            } catch(e) {
+                console.error('فشل حذف المنتج:', id);
+            }
+        }
+        
+        this.innerText = 'حذف المحدد 🗑️';
+        alert('تم الانتهاء من الحذف');
+    };
+
     document.addEventListener('click', function(e) {
         if(e.target && e.target.classList.contains('real-del-btn')){
             if(!confirm('حذف نهائي؟')) return;
@@ -205,20 +231,16 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `_token=${currentToken}&_method=DELETE`
-            }).then(() => { e.target.closest('tr').remove(); });
+            }).then(() => { 
+                e.target.closest('tr').remove(); 
+                document.getElementById('st_match').innerText = document.querySelectorAll('.row-sel').length;
+            });
         }
     });
 
-    // كود التصدير المضمون (v19)
     document.getElementById('btn_xls').onclick = function() {
         const checked = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => cb.dataset.id.toString());
-        let exportList = [];
-        if(checked.length > 0) {
-            exportList = allData.filter(p => checked.includes(p.id.toString()));
-        } else {
-            const visible = Array.from(document.querySelectorAll('.row-sel')).map(cb => cb.dataset.id.toString());
-            exportList = allData.filter(p => visible.includes(p.id.toString()));
-        }
+        let exportList = checked.length > 0 ? allData.filter(p => checked.includes(p.id.toString())) : allData.filter(p => Array.from(document.querySelectorAll('.row-sel')).map(cb => cb.dataset.id.toString()).includes(p.id.toString()));
         if(exportList.length === 0) return alert('لا توجد بيانات');
         const ws = XLSX.utils.json_to_sheet(exportList);
         const wb = XLSX.utils.book_new();
